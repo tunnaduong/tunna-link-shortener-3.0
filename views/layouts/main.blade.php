@@ -16,6 +16,10 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/assets/js/moment-with-locales.js"></script>
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+    <script>
+        // Pass environment variable to JavaScript
+        window.adsRedirectUrl = "{{ $_ENV['ADS_REDIRECT_URL'] ?? 'https://shope.ee/7zlMOzSB7w' }}";
+    </script>
     <script src="/assets/js/script.js"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3425905751761094"
         crossorigin="anonymous"></script>

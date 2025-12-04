@@ -92,7 +92,8 @@ function openNewWindow(url) {
   }
 
   setTimeout(function () {
-    window.location.href = "https://shope.ee/7zlMOzSB7w";
+    window.location.href =
+      window.adsRedirectUrl || "https://shope.ee/7zlMOzSB7w";
   }, 1500);
 }
 

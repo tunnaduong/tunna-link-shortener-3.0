@@ -908,7 +908,7 @@ class AdminController
   {
     // Set headers first
     header('Content-Type: application/json');
-    
+
     // Set server timeout to prevent hanging
     set_time_limit(12); // 12 second timeout (less than client timeout)
     ini_set('max_execution_time', 12);
@@ -946,9 +946,9 @@ class AdminController
       } else {
         // Use output buffering to catch any unexpected output
         ob_start();
-        
+
         $ogTags = $this->openGraphService->extractOpenGraphTags($url);
-        
+
         // Clear any unexpected output
         ob_end_clean();
 
@@ -988,7 +988,7 @@ class AdminController
     } catch (\Throwable $e) {
       // Catch any fatal errors
       error_log("AdminController extractOpenGraph fatal error: " . $e->getMessage() . " | URL: " . $url);
-      
+
       $fallbackData = [
         'title' => parse_url($url, PHP_URL_HOST) ?: 'Website',
         'description' => 'Unable to extract Open Graph data',

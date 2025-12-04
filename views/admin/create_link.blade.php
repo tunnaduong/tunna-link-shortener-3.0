@@ -163,7 +163,8 @@
                         <li><strong>Simple:</strong> <code>https://example.com</code></li>
                         <li><strong>Advanced:</strong> <code>https://example.com|type|wait|password|tag</code></li>
                         <li><strong>With Custom Code:</strong>
-                            <code>https://example.com|myshortcode|type|wait|password|tag</code></li>
+                            <code>https://example.com|myshortcode|type|wait|password|tag</code>
+                        </li>
                     </ul>
                     <p><strong>Parameters:</strong> custom_code (optional), type (0=direct, 1=click, 2=captcha, 3=password,
                         4=instant), wait (seconds), password, tag</p>
@@ -505,7 +506,8 @@
                                 console.log("Open Graph data extracted successfully");
                             }
                         } else {
-                            alert("Không thể trích xuất Open Graph: " + (data.error || "Lỗi không xác định"));
+                            alert("Không thể trích xuất Open Graph: " + (data.error ||
+                                "Lỗi không xác định"));
                         }
                     })
                     .catch(error => {
@@ -513,7 +515,8 @@
                         console.error("Error:", error);
 
                         if (error.name === "AbortError") {
-                            alert("Request bị timeout. Website có thể chậm hoặc chặn request. Vui lòng thử lại hoặc nhập thông tin thủ công.");
+                            alert(
+                                "Request bị timeout. Website có thể chậm hoặc chặn request. Vui lòng thử lại hoặc nhập thông tin thủ công.");
                         } else if (error.message && error.message.includes("HTTP error")) {
                             alert("Lỗi kết nối đến server. Vui lòng thử lại.");
                         } else {
