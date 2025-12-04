@@ -906,27 +906,31 @@ class AdminController
 
   public function extractOpenGraph()
   {
+    // Set headers first
+    header('Content-Type: application/json');
+    
     // Set server timeout to prevent hanging
-    set_time_limit(20); // 20 second timeout
+    set_time_limit(12); // 12 second timeout (less than client timeout)
+    ini_set('max_execution_time', 12);
 
     // Check authentication
     if (!isset($_SESSION['admin_authenticated']) || !$_SESSION['admin_authenticated']) {
       http_response_code(401);
-      echo json_encode(['error' => 'Unauthorized']);
+      echo json_encode(['success' => false, 'error' => 'Unauthorized']);
       return;
     }
 
     $url = $_POST['url'] ?? '';
     if (empty($url)) {
       http_response_code(400);
-      echo json_encode(['error' => 'URL is required']);
+      echo json_encode(['success' => false, 'error' => 'URL is required']);
       return;
     }
 
     // Validate URL - allow javascript: URLs
     if (!filter_var($url, FILTER_VALIDATE_URL) && strpos($url, 'javascript:') !== 0) {
       http_response_code(400);
-      echo json_encode(['error' => 'Invalid URL']);
+      echo json_encode(['success' => false, 'error' => 'Invalid URL']);
       return;
     }
 
@@ -940,7 +944,13 @@ class AdminController
           'url' => $url
         ];
       } else {
+        // Use output buffering to catch any unexpected output
+        ob_start();
+        
         $ogTags = $this->openGraphService->extractOpenGraphTags($url);
+        
+        // Clear any unexpected output
+        ob_end_clean();
 
         // Check if we got any meaningful data
         $hasData = false;
@@ -960,9 +970,10 @@ class AdminController
       }
 
       echo json_encode(['success' => true, 'data' => $ogTags]);
+      return;
     } catch (\Exception $e) {
       // Log the error for debugging
-      error_log("AdminController extractOpenGraph error: " . $e->getMessage());
+      error_log("AdminController extractOpenGraph error: " . $e->getMessage() . " | URL: " . $url);
 
       // Provide fallback data even on error
       $fallbackData = [
@@ -973,6 +984,20 @@ class AdminController
       ];
 
       echo json_encode(['success' => true, 'data' => $fallbackData, 'warning' => 'Limited data extracted due to: ' . $e->getMessage()]);
+      return;
+    } catch (\Throwable $e) {
+      // Catch any fatal errors
+      error_log("AdminController extractOpenGraph fatal error: " . $e->getMessage() . " | URL: " . $url);
+      
+      $fallbackData = [
+        'title' => parse_url($url, PHP_URL_HOST) ?: 'Website',
+        'description' => 'Unable to extract Open Graph data',
+        'site_name' => parse_url($url, PHP_URL_HOST) ?: 'Website',
+        'url' => $url
+      ];
+
+      echo json_encode(['success' => true, 'data' => $fallbackData, 'warning' => 'Error occurred during extraction']);
+      return;
     }
   }
 

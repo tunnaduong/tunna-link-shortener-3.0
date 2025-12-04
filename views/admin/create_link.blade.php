@@ -423,38 +423,43 @@
                 batchAdsImageUploadInput.click();
             });
 
+            // Store original button text
+            const extractOgBtn = document.getElementById("extract-og-btn");
+            const originalButtonText = extractOgBtn.textContent;
+
             // Auto-extract OpenGraph on paste
             document.getElementById("next_url").addEventListener("paste", function(e) {
                 setTimeout(() => {
                     if (this.value && this.value.trim()) {
-                        // Show loading indicator
-                        const button = document.getElementById("extract-og-btn");
-                        const originalText = button.textContent;
-                        button.textContent = "Auto-extracting...";
-                        button.disabled = true;
-
-                        // Trigger extraction
-                        document.getElementById("extract-og-btn").click();
+                        // Trigger extraction without changing button state here
+                        // Let the click handler manage the button state
+                        extractOgBtn.click();
                     }
                 }, 100);
             });
 
             // Open Graph extraction functionality
-            document.getElementById("extract-og-btn").addEventListener("click", function() {
+            extractOgBtn.addEventListener("click", function() {
                 const url = document.getElementById("next_url").value;
                 if (!url) {
-                    alert("Please enter a URL first");
+                    alert("Vui lòng nhập URL trước");
+                    return;
+                }
+
+                // Prevent multiple simultaneous requests
+                if (this.disabled) {
                     return;
                 }
 
                 const button = this;
-                const originalText = button.textContent;
-                button.textContent = "Extracting...";
+                button.textContent = "Đang trích xuất...";
                 button.disabled = true;
 
                 // Create AbortController for timeout
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                const timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 10000); // 10 second timeout (reduced from 15)
 
                 fetch("/admin/extract-og", {
                         method: "POST",
@@ -464,7 +469,12 @@
                         body: "url=" + encodeURIComponent(url),
                         signal: controller.signal
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         clearTimeout(timeoutId); // Clear the timeout
                         if (data.success) {
@@ -479,21 +489,23 @@
                                 document.getElementById("link_preview_url").value = data.data.image;
                                 // Show preview of the image
                                 const preview = document.getElementById("preview-image-preview");
-                                preview.innerHTML =
-                                    `<img src="${data.data.image}" style="max-width: 100%; max-height: 200px; border-radius: 4px;">`;
+                                if (preview) {
+                                    preview.innerHTML =
+                                        `<img src="${data.data.image}" style="max-width: 100%; max-height: 200px; border-radius: 4px;">`;
+                                }
                             }
 
                             // Display all extracted Open Graph tags
                             showExtractedTags(data.data);
 
                             if (data.warning) {
-                                alert("Open Graph data extracted with limitations: " + data.warning);
+                                alert("Đã trích xuất Open Graph với hạn chế: " + data.warning);
                             } else {
-                                alert("Open Graph data extracted successfully!");
+                                // Silent success - no alert to avoid interruption
+                                console.log("Open Graph data extracted successfully");
                             }
                         } else {
-                            alert("Failed to extract Open Graph data: " + (data.error ||
-                                "Unknown error"));
+                            alert("Không thể trích xuất Open Graph: " + (data.error || "Lỗi không xác định"));
                         }
                     })
                     .catch(error => {
@@ -501,14 +513,16 @@
                         console.error("Error:", error);
 
                         if (error.name === "AbortError") {
-                            alert(
-                                "Request timed out. The website may be slow or blocking requests. Please try again or enter the information manually.");
+                            alert("Request bị timeout. Website có thể chậm hoặc chặn request. Vui lòng thử lại hoặc nhập thông tin thủ công.");
+                        } else if (error.message && error.message.includes("HTTP error")) {
+                            alert("Lỗi kết nối đến server. Vui lòng thử lại.");
                         } else {
-                            alert("Failed to extract Open Graph data. Please try again.");
+                            alert("Không thể trích xuất Open Graph. Vui lòng thử lại.");
                         }
                     })
                     .finally(() => {
-                        button.textContent = originalText;
+                        // Always restore button state
+                        button.textContent = originalButtonText;
                         button.disabled = false;
                     });
             });
