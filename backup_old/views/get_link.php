@@ -9,7 +9,7 @@ $result = $conn->query($sql);
 
 function callApi($id, $size, $ref)
 {
-    $url = "https://tunna.id.vn/api/tracker";
+    $url = "https://tunn.ad/api/tracker";
     $data = array(
         'id' => $id,
         'size' => $size,
